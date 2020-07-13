@@ -1,0 +1,8 @@
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\bin\Debug\smartIAP.exe
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\bin\Debug\smartIAP.pdb
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\obj\Debug\smartIAP.csprojAssemblyReference.cache
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\obj\Debug\smartIAP.Form1.resources
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\obj\Debug\smartIAP.Properties.Resources.resources
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\obj\Debug\smartIAP.csproj.GenerateResource.cache
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\obj\Debug\smartIAP.exe
+D:\sysDef\Documents\GitHub\PCSoftware\procjet\smartIAP\smartIAP\obj\Debug\smartIAP.pdb
