@@ -133,6 +133,7 @@ namespace PCSoftware
         public MyCommunication()
         {
             myRecData = new MyportData();
+            mySendData = new MyportData();
             lastTime = DateTime.Now.Ticks / 10000; //ms数
         }
 
@@ -151,7 +152,11 @@ namespace PCSoftware
             long T = DateTime.Now.Ticks / 10000 - lastTime;
             lastTime = DateTime.Now.Ticks / 10000;
             if (T > outTime)   //超时 并且没有接收完毕 那么从新开始
+            {
+                myRecData.num = 0;
                 recFlag = 0;
+            }
+                
 
             for (int i = 0; i < len; i++)
             {
@@ -191,7 +196,7 @@ namespace PCSoftware
         }
         public int sendData( byte cmd, byte[] data, int len)
         {
-            mySendData.start = 0xaa; // aa 01 00 00 00 00 ee
+            mySendData.start = 0xbb; // aa 01 00 00 00 00 ee
             mySendData.cmd = cmd;
             mySendData.len = len;
             mySendData.data = data;

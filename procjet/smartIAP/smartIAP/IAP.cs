@@ -17,20 +17,27 @@ namespace PCSoftware
         public object o;
     }
 
-    public class MyThreadPort
+    public class MyIAP
     {
         public int startA = 0;  //起始地址
-        public int restMode = 0; // 复位方式 0 不用复位  1 "rest\n"
-        public int restTime = 1000;
+        public int restMode = 0; // 复位方式 0 调用复位委托(若不存在则不复位)  1 "rest\n"
+        public int restTime = 2000;
         byte[] hexB;
 
         byte[] outBTem;
-        public int threadFlag = 0;
         public int threadIsRun = 0;
         Thread mThread;
 
-        MyCommunication mc;  //
+        public MyCommunication mc;  //外部实现 通信接口
 
+        public delegate int MCURestDelegate();
+        public MCURestDelegate MCURestD; //mcu复位委托 相当于函数指针
+
+        public delegate int startDelegate();
+        public exitDelegate startD; //start 开始下载委托 相当于函数指针
+
+        public delegate int exitDelegate();
+        public exitDelegate exitD; //exit 下载完成委托 相当于函数指针
 
         public ConcurrentQueue<QueueData> uiRecQueue = new ConcurrentQueue<QueueData>();//portrec
         public ConcurrentQueue<QueueData> uiQueue = new ConcurrentQueue<QueueData>();  //sendtoui
@@ -40,25 +47,31 @@ namespace PCSoftware
         {
             if (mode == 0)
             {
-
+                if (MCURestD!= null)
+                {
+                    MCURestD();
+                }
             }else if (mode == 1)
             {
-                byte[] byteArray = System.Text.Encoding.ASCII.GetBytes("rest\n");
+                byte[] byteArray = System.Text.Encoding.ASCII.GetBytes("Rest\n");
                 mc.Write(byteArray, byteArray.Length);
             }
 
             long lastTime = DateTime.Now.Ticks / 10000;
-            
+            int i = 0;
             while (true)
             {
-                if (mc.runCmdPact(0x01, null, 0, 50, out outBTem) >= 0)
+                if (mc.runCmdPact(0x01, null, 0, 55, out outBTem) >= 0)
                 {
-                    setText("debug", "转板进入iap成功\r\n");
+                    setText("debug", "进入iap成功\r\n");
                     break;
                 }
+                i++;
+
                 if (DateTime.Now.Ticks / 10000 - lastTime > oTime)
                 {
-                    setText("debug", "转板进入iap失败\r\n");
+                    setText("debug", "进入iap失败\r\n");
+                    setText("debug", "i: "+i+"\r\n");
                     return -1;
                 }
 
@@ -75,10 +88,15 @@ namespace PCSoftware
             byte[] b2;
             int start = 0;
 
-            
             byte[] b = new byte[1024 * 1024];
             string name = "";
             int l;
+
+            if (startD != null)
+                startD();
+
+            if (MCURest(restMode, restTime) < 0)
+                return -1;
 
             setProgressBar1("Value", 0);
             if ((l = HEX2BIN.readHex(hexB, ref b, b.Length ,ref start,ref name)) < 0)
@@ -96,7 +114,7 @@ namespace PCSoftware
             
 
             setProgressBar1("Maximum",l);
-            Thread.Sleep(500);
+            //Thread.Sleep(500);
 
             if (mc.runCmdPact(0x47, null, 0, 3000,out outBTem) >= 0)
             {
@@ -175,60 +193,40 @@ namespace PCSoftware
             return 0;
         }
 
-        private int processUIcmd(QueueData cm)
+
+        public MyIAP()
         {
-            int restFlag = 0;
-            int time = 0;
-            int i = 0;
-            QueueData c = new QueueData();
-            MyportData sendData = new MyportData();
 
             
+        }
 
+        public int startDownland(byte[] hex, int startArr)
+        {
+            hexB = hex;
+            startA = startArr;
 
+            if (threadIsRun != 0)
+            {
+                setText("debug", "线程正在运行");
+                return -1;
+            }
             
+            mThread = new Thread(() => // Lambda 表达式
+            {
+                threadIsRun = 1;
+                
+                setText("debug", "进入线程");
+                downlandIAP();
+                setText("debug", "退出线程");
+                if (exitD != null)
+                    exitD();
+                threadIsRun = 0;
+            });
+            mThread.Start();  // 开始
+
             return 0;
         }
 
-
-        public MyThreadPort()
-        {
-
-            mThread = new Thread(() => // Lambda 表达式
-            {
-                threadRun();
-            });
-            mThread.Start();  // 开始
-        }
-
-        void threadRun()
-        {
-            QueueData b;
-            while (true)
-            {
-                if ((threadFlag < 0) || (threadFlag > 200))//命令控制或超时关闭
-                {
-                    setText("debug", "thread out");
-                    return;
-                }
-                else if (threadFlag > 0)
-                    threadFlag++;
-
-
-                while (uiRecQueue.TryDequeue(out b)) //清空队列
-                {
-                    threadIsRun = 1;
-                    setText("debug", "进入线程");
-
-                    setEnd(processUIcmd(b));
-                    setText("debug", "退出线程");
-
-                    threadIsRun = 0;
-                }
-
-                Thread.Sleep(5);
-            }
-        }
 
         private void setText(string i, string s)
         {
